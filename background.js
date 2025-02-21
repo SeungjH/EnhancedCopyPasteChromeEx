@@ -1,76 +1,102 @@
+//Listens to commands from Content.js and handles copy-paste operations using chrome.storage
+chrome.commands.onCommand.addListener((command) => {
+  console.log(`Command received: ${command}`);
 
-//This is the background script that listens to the commands from the Content.js
+  const index = parseInt(command.charAt(command.length - 1), 10); //extracts slot number and parse as base 10 (decimal). copy-1 will extract 1.
+  if (isNaN(index)) {
+    console.error("invalid index");
+    return;
+  }
 
-chrome.commands.onCommand.addListener((command) => { //command is the message sent from Content.js and is either "copy-1||2" or "paste-1||2"
-    console.log(`Command received: ${command}`);
-  
-    const index = parseInt(command.charAt(command.length - 1));  // 1 or 2 depending on the command
-    console.log(index);
+  //COPY
+  if (command.startsWith("copy")) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (!tabs.length) {
+        console.error("no active tab found");
+        return;
+      }
 
-    //COPY
-    if (command.startsWith("copy")) {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs.length === 0) {
-          console.log("No active tab found.");
+      chrome.scripting.executeScript({
+        //allFrames ensures selections in iframes like google docs are captured
+        target: {
+          allFrames: true, tabId: tabs[0].id //tabId is crucial for Chrome to know where to execute the script
+        },
+        func: () => window.getSelection().toString()
+      }, 
+      (result) => {
+        //exiting when error encountered
+        if (chrome.runtime.lastError) {
+          console.error(`scripting error: ${chrome.runtime.lastError.message}`);
           return;
         }
-        
 
-        //This makes the code shit (injects this js file only to the first opened tab)
-        //CHANGE THIS
-        //Also it is not accepting when index is 0. 
-        const tabId = tabs[0].id;
-  
+        const copiedText = result[0]?.result; //? will prevent error if result[0] is undefined or null
+        if (copiedText) {
+          chrome.storage.local.get(['copiedTexts'], ({ copiedTexts = [] }) => {
+            copiedTexts[index] = copiedText;
+
+            //save the updated clipboard array back to storage
+            chrome.storage.local.set({ copiedTexts }, () => {
+              console.log(`Text copied to slot ${index}:`, copiedText);
+            });
+          });
+        }
+        else {
+          console.warn("no text selected to copy");
+        }
+      }
+    );
+    });
+  }
+
+  //PASTE
+  else if (command.startsWith("paste")) {
+    //retrieve existing copied texts, defaulting to an empty array if none exist
+    chrome.storage.local.get(['copiedTexts'], ({ copiedTexts = [] }) => {
+      const textToPaste = copiedTexts[index];
+      if (!textToPaste) {
+        console.warn(`No text found in slot ${index} to paste.`);
+        return;
+      }
+      //checking tabs exist
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (!tabs.length) {
+          console.error("no active tab found");
+          return;
+        }
+        //inject a script into the active tab to paste the text into the focused element
         chrome.scripting.executeScript({
-          target: { 
-            tabId 
-        },
-          func: () => window.getSelection().toString(),
-        }, (result) => {
+          target: {
+             allFrames: true, tabId: tabs[0].id 
+          },
 
-          if (chrome.runtime.lastError) {
-            console.log(`Scripting error: ${chrome.runtime.lastError.message}`);
-          } 
-          else {
-            const copiedText = result[0]?.result;
-            console.log(`Copied text: ${copiedText}`);
+          //need more case to handle google docs etc...
+          func: (text) => {
+            const activeElement = document.activeElement; //the focused element
 
-            if (copiedText) {
-                chrome.storage.local.get(['copiedTexts'], ({ copiedTexts = [] }) => {
-                  copiedTexts[index] = copiedText;
-                  chrome.storage.local.set({ copiedTexts });
-                  
-                });
+            //case 1: Input or textarea fields (e.g., forms, search bars)
+            if (activeElement && activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) {
+              activeElement.value += text;
+            } 
+            //case 2: Content-editable elements
+            else if (activeElement && activeElement.isContentEditable) {
+              document.execCommand('insertText', false, text);
+            } 
+            //no suitable paste area found
+            else {
+              console.warn("cannot paste here");
             }
+          },
+          
+          args: [textToPaste],
+        }, () => {
+          if (chrome.runtime.lastError) {
+            console.error(`Paste failed: ${chrome.runtime.lastError.message}`);
+          } else {
+            console.log(`Pasted text from slot ${index}`);
           }
         });
       });
-    } 
-
-    //PASTE
-    else if (command.startsWith("paste")) {
-      chrome.storage.local.get(['copiedTexts'], ({ copiedTexts = [] }) => {
-        const textToPaste = copiedTexts[index];
-
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          chrome.scripting.executeScript({
-            //I need to find a way to not use tabs[0].id so that it can work with multiple tabs or every tabs
-            target: { 
-              tabId: tabs[0].id 
-            },
-            //gotta change this part of the logic
-            func: (text) => {
-              const active = document.activeElement;
-              if (active && active.value !== undefined) {
-                active.value += text;
-
-              } else if (active && active.textContent !== undefined) {
-                active.textContent += text;
-              }
-            },
-            args: [textToPaste]
-          });
-        });
-      });
-    }
-  });
+    });
+  }
+});

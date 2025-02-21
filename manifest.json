@@ -4,12 +4,12 @@
   "version": "1.0",
   "description": "Copy and paste up to 2 texts with custom shortcuts.",
   "permissions": ["storage", "scripting", "activeTab"],
+  "host_permissions": ["https://docs.google.com/*"],
   "background": {
     "service_worker": "background.js"
   },
 
   "action": {
-  "default_popup": "popup.html",
   "default_title": "Multi Copy Paste"
   },
   
@@ -42,8 +42,10 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["Content.js"]
+      "matches": ["<all_urls>", "https://docs.google.com/*"],
+      "js": ["Content.js"],
+      "all_frames": true
     }
   ]
+
 }
