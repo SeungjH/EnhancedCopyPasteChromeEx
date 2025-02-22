@@ -1,3 +1,5 @@
+//COMMENTS FOR manifest.json as .json files does not support commenting by default, the below line is the comment for it:
+//ctrl+shift+1/2/6/7 may be difficult for windows users as the shortcut was designed for mac key placement. 
 //Listens to commands from Content.js and handles copy-paste operations using chrome.storage
 chrome.commands.onCommand.addListener((command) => {
   console.log(`Command received: ${command}`);
