@@ -1,5 +1,11 @@
 # EnhancedCopyPasteChromeEx
 Enhanced Copy n Paste Chrome Extension
+Limitations:
+    - won't work on apps other than Chrome
+    - won't work on chrome:// pages such as chrome://extensions (chrome blocked it for security reasons)
+    - won't work on URLs
+
+
 
 2/19
 - Moved files to github
@@ -23,7 +29,14 @@ Not Fixed:
     - create a popoup page
     - double clicking the word and highlighting and then pasting doesn't work
 
-Limitations:
-    - won't work on apps other than Chrome
-    - won't work on chrome:// pages such as chrome://extensions (chrome blocked it for security reasons)
-    - won't work on URLs
+
+
+2/24
+
+Fixed: 
+    - now works on other chrome windows
+Not Fixed: 
+    - not working on https://my.wisc.edu/web/expanded 's search bar. Look into what text area it uses
+    - doesn't work on google docs
+    - create a popoup page
+    - double clicking the word and highlighting and then pasting doesn't work
