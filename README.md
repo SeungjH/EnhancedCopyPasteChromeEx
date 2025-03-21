@@ -1,5 +1,11 @@
 # EnhancedCopyPasteChromeEx
 Enhanced Copy n Paste Chrome Extension
+//COMMENTS FOR manifest.json as .json files does not support commenting by default, the below line is the comment for it:
+//ctrl+shift+1/2/6/7 may be difficult for windows users as the shortcut was designed for mac key placement. 
+//Listens to commands from Content.js and handles copy-paste operations using chrome.storage
+
+
+
 Limitations:
     - won't work on apps other than Chrome
     - won't work on chrome:// pages such as chrome://extensions (chrome blocked it for security reasons)
@@ -40,3 +46,8 @@ Not Fixed:
     - doesn't work on google docs
     - create a popoup page
     - double clicking the word and highlighting and then pasting doesn't work
+
+    
+3/11
+
+It turns out that I cannot access text in iFrame for security reasons; so for now, it cannot change texts in google docs

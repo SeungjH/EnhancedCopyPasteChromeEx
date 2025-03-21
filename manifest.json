@@ -3,11 +3,9 @@
   "name": "Multi Copy Paste",
   "version": "1.0",
   "description": "Copy and paste up to 2 texts with custom shortcuts.",
-  "permissions": ["storage", "scripting", "activeTab", "tabs"],
+  "permissions": ["storage", "scripting", "activeTab", "tabs", "clipboardWrite", "clipboardRead"],
   "host_permissions": [
-      "https://docs.google.com/document/*",
-      "https://docs.google.com/presentation/*",
-      "https://docs.google.com/spreadsheets/*"
+      "https://docs.google.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -41,7 +39,7 @@
       "suggested_key": {
         "default": "Ctrl+Shift+7"
       },
-      "description": "Paste text 2"
+      "description": "Control text 2"
     }
   },
   "content_scripts": [

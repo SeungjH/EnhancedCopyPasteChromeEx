@@ -1,5 +1,3 @@
-
-
 let activeTabId = null; //stores the currently active tab id
 
 //track when the active tab changes (tab switching)
@@ -22,38 +20,35 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
     });
 });
 
-
-//listen to commands and handle copy-paste operations
+//listen to command and handle copy-paste operations
 chrome.commands.onCommand.addListener((command) => {
     console.log(`command: ${command}`);
     //extracts slot number and parse as base 10 (decimal). copy-1 will extract 1.
     const index = parseInt(command.charAt(command.length - 1), 10); 
 
     //copy handler
-    //: copy and paste codes are changed from using chrome.tabs.query to using activeTabId (solution to using multiple windows)
+    //: codes for copy and paste are changed from using chrome.tabs.query to using activeTabId (solution to using multiple windows)
     if (command.startsWith("copy")) { //"copy" is in lowercase since Chrome always passes commands in lowercase
         if (!activeTabId) {
             console.error("no active tabs");
             return;
         }
-
         chrome.scripting.executeScript({
-          
           target: { allFrames: true, tabId: activeTabId },
           func: () => {
-              // check if we're in google docs
+              //check if we're in google docs                       
               if (document.location.href.includes("docs.google.com")) {
                   document.execCommand('copy'); // use execCommand to copy in google docs
-                  return "copied text from google docs";
+                  return "copiedText";
               }
               return window.getSelection().toString(); // normal copying for other sites
-          },
-        }, (result) => {
+          }
+        }, 
+        (result) => {
             if (chrome.runtime.lastError) {
                 console.error(`error: ${chrome.runtime.lastError.message}`);
                 return;
             }
-
             const copiedText = result[0]?.result;
             if (copiedText) {
                 chrome.storage.local.get(['copiedTexts'], ({ copiedTexts = [] }) => {
